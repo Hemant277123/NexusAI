@@ -39,10 +39,10 @@ from agent import create_agent, NexusAgent
 
 app = FastAPI(title="NexusAI API", version="1.0.0")
 
-# CORS for Next.js frontend
+# CORS for frontend (allow all origins for production)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=["*"],  # Allow all origins in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -82,6 +82,11 @@ class Chat(BaseModel):
 @app.get("/")
 async def root():
     return {"status": "ok", "service": "NexusAI API"}
+
+@app.get("/api/health")
+async def health_check():
+    """Health check endpoint for monitoring."""
+    return {"status": "healthy", "service": "NexusAI API"}
 
 @app.get("/api/config")
 async def get_config():
