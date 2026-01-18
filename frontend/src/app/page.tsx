@@ -65,6 +65,7 @@ export default function Home() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [page, setPage] = useState<'chat' | 'chats' | 'about'>('chat');
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [toast, setToast] = useState<string | null>(null);
 
     // Session State
@@ -97,6 +98,9 @@ export default function Home() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Mobile detection
+    const [isMobile, setIsMobile] = useState(false);
+
     // ==========================================================================
     // EFFECTS
     // ==========================================================================
@@ -116,6 +120,14 @@ export default function Home() {
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
+    // Mobile detection
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -215,6 +227,7 @@ export default function Home() {
             setCurrentChatId(chatId);
             setMessages(chat.messages);
             setPage('chat');
+            setMobileMenuOpen(false);
         }
     };
 
@@ -580,24 +593,27 @@ export default function Home() {
     // ==========================================================================
 
     const renderSidebar = () => (
-        <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
+        <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'mobile-open' : ''}`}>
             {/* Logo - Clickable */}
             <div className="sidebar-header">
-                <button className="logo-btn" onClick={goHome} title="New Chat">
+                <button className="logo-btn" onClick={() => { goHome(); setMobileMenuOpen(false); }} title="New Chat">
                     <img src="/logo.png" alt="NexusAI" className="logo-img" />
                     {!sidebarCollapsed && <span className="logo-text">NexusAI</span>}
                 </button>
                 <button
                     className="sidebar-toggle"
-                    onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                    onClick={() => {
+                        setSidebarCollapsed(!sidebarCollapsed);
+                        setMobileMenuOpen(false);
+                    }}
                     title={sidebarCollapsed ? 'Expand' : 'Collapse'}
                 >
-                    {sidebarCollapsed ? '→' : '←'}
+                    {sidebarCollapsed ? '→' : '×'}
                 </button>
             </div>
 
             {/* New Chat Button */}
-            <button className="new-chat-btn" onClick={newChat} title="New Chat (Ctrl+K)">
+            <button className="new-chat-btn" onClick={() => { newChat(); setMobileMenuOpen(false); }} title="New Chat (Ctrl+K)">
                 <span className="icon">+</span>
                 {!sidebarCollapsed && <span>New chat</span>}
             </button>
@@ -607,7 +623,7 @@ export default function Home() {
                 <nav className="sidebar-nav">
                     <button
                         className={`nav-item ${page === 'chats' ? 'active' : ''}`}
-                        onClick={() => setPage('chats')}
+                        onClick={() => { setPage('chats'); setMobileMenuOpen(false); }}
                     >
                         <span className="icon">💬</span>
                         <span>Chats</span>
@@ -679,7 +695,7 @@ export default function Home() {
                         </button>
                         <button
                             className={`nav-item ${page === 'about' ? 'active' : ''}`}
-                            onClick={() => setPage('about')}
+                            onClick={() => { setPage('about'); setMobileMenuOpen(false); }}
                         >
                             <span className="icon">ℹ️</span>
                             <span>About</span>
@@ -691,7 +707,7 @@ export default function Home() {
                         <button className="nav-item-icon" onClick={toggleTheme} title="Toggle theme">
                             {theme === 'light' ? '🌙' : '☀️'}
                         </button>
-                        <button className="nav-item-icon" onClick={() => setPage('about')} title="About">
+                        <button className="nav-item-icon" onClick={() => { setPage('about'); setMobileMenuOpen(false); }} title="About">
                             ℹ️
                         </button>
                     </>
@@ -743,8 +759,10 @@ export default function Home() {
                         <button
                             className="model-selector"
                             onClick={() => setShowModelDropdown(!showModelDropdown)}
+                            title={currentModel.name}
                         >
-                            {currentModel.name}
+                            <span className="model-icon">⚡</span>
+                            {!isMobile && <span className="model-name-text">{currentModel.name}</span>}
                             <span className="chevron">▾</span>
                         </button>
                         {showModelDropdown && (
@@ -1297,11 +1315,58 @@ export default function Home() {
 
     return (
         <div className="app-container" data-theme={theme}>
+            {/* Mobile Menu Button */}
+            <button
+                className="mobile-menu-btn"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label="Toggle menu"
+            >
+                {mobileMenuOpen ? '×' : '☰'}
+            </button>
+
+            {/* Mobile Overlay */}
+            <div
+                className={`mobile-overlay ${mobileMenuOpen ? 'active' : ''}`}
+                onClick={() => setMobileMenuOpen(false)}
+            />
+
             {renderSidebar()}
 
             {page === 'chat' && renderChatPage()}
             {page === 'chats' && renderChatsPage()}
             {page === 'about' && renderAboutPage()}
+
+            {/* Mobile Bottom Navigation */}
+            <nav className="mobile-bottom-nav">
+                <button
+                    className={`mobile-nav-item ${page === 'chat' ? 'active' : ''}`}
+                    onClick={() => { goHome(); }}
+                >
+                    <span className="mobile-nav-icon">💬</span>
+                    <span className="mobile-nav-label">Chat</span>
+                </button>
+                <button
+                    className={`mobile-nav-item ${page === 'chats' ? 'active' : ''}`}
+                    onClick={() => setPage('chats')}
+                >
+                    <span className="mobile-nav-icon">📋</span>
+                    <span className="mobile-nav-label">History</span>
+                </button>
+                <button
+                    className="mobile-nav-item"
+                    onClick={toggleTheme}
+                >
+                    <span className="mobile-nav-icon">{theme === 'light' ? '🌙' : '☀️'}</span>
+                    <span className="mobile-nav-label">Theme</span>
+                </button>
+                <button
+                    className={`mobile-nav-item ${page === 'about' ? 'active' : ''}`}
+                    onClick={() => setPage('about')}
+                >
+                    <span className="mobile-nav-icon">ℹ️</span>
+                    <span className="mobile-nav-label">About</span>
+                </button>
+            </nav>
 
             {toast && <div className="toast">{toast}</div>}
         </div>
