@@ -1,0 +1,13 @@
+# NexusAI Backend Requirements
+fastapi>=0.109.0
+uvicorn>=0.27.0
+python-multipart>=0.0.6
+pydantic>=2.0.0
+langchain>=0.1.0
+langchain-openai>=0.0.5
+langchain-tavily>=0.0.1
+langchain-pinecone>=0.1.0
+langgraph>=0.0.20
+pinecone-client>=3.0.0
+python-dotenv>=1.0.0
+
